@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start:dev": "nodemon server.js",
-    "start:prod": "NODE_ENV=production node server.js"
+    "start:prod": "NODE_ENV=production node server.js",
+    "debug": "ndb server.js"
   },
   "author": "Breno Oliveira Dias",
   "license": "ISC",
@@ -14,6 +15,9 @@
     "express": "^4.21.2",
     "mongoose": "^8.9.5",
     "morgan": "^1.10.0",
-    "natours": "file:"
+    "natours": "file:",
+    "ndb": "^1.1.5",
+    "slugify": "^1.6.6",
+    "validator": "^13.12.0"
   }
 }

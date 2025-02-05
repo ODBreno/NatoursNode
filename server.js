@@ -4,7 +4,7 @@ dotenv.config({ path: "./config.env" });
 const mongoose = require("mongoose");
 
 const app = require("./app");
-console.log(process.env);
+// console.log(process.env);
 
 const DB = process.env.DATABASE.replace("<PASSWORD>", process.env.DATABASE_PASSWORD);
 mongoose.connect(DB).then(() => console.log("Conexão com o banco de dados estabelecida..."));
