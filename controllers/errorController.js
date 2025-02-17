@@ -5,6 +5,9 @@ const handleCastErrorDB = (err) => {
   return new AppError(message, 400);
 };
 
+const handleJWTExpiredError = () => new AppError("Token expirado. Faça login novamente!", 401);
+const handleJWTError = () => new AppError("Token inválido. Faça login novamente!", 401);
+
 const handleDuplicateFieldsDB = (err) => {
   const value = err.errorResponse.errmsg.match(/(["'])(\\?.)*?\1/)[0];
   const message = `Valor duplicado: ${value}, por favor, utilize outro valor.`;
@@ -57,6 +60,8 @@ module.exports = (err, req, res, next) => {
         if(error.name === "CastError") error = handleCastErrorDB(error);
         if(error.code === 11000) error = handleDuplicateFieldsDB(error);
         if(error.name === "ValidationError") error = handleValidationErrorDB(error);
+        if(error.name === "JsonWebTokenError") error = handleJWTError();
+        if(error.name === "TokenExpiredError") error = handleJWTExpiredError();
         sendErrorProduction(error, res);
     };
 };
