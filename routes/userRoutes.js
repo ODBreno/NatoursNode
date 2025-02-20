@@ -9,6 +9,8 @@ router.route("/login").post(authController.login);
 router.route("/forgotPassword").post(authController.forgotPassword);
 router.route("/resetPassword/:token").patch(authController.resetPassword);
 
+router.patch("/updateMyPassword", authController.protect, authController.updatePassword);
+
 router.route("/").get(userController.getAllUsers).post(userController.createUser);
 router.route("/:id").get(userController.getUserById).patch(userController.updateUser).delete(userController.deleteUser);
 
