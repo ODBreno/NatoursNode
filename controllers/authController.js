@@ -2,7 +2,8 @@ const jwt = require("jsonwebtoken");
 const AppError = require("../utils/appError");
 const User = require("../models/userModel");
 const catchAsync = require("../utils/catchAsync");
-
+const sendEmail = require("../utils/email");
+const crypto = require("crypto"); 
 
 const signToken = (id) => {
     return jwt.sign({id}, process.env.JWT_SECRET, {
@@ -14,6 +15,7 @@ exports.signup = catchAsync( async (req, res, next) => {
     const newUser = await User.create({
         name: req.body.name,
         email: req.body.email,
+        role: req.body.role,
         password: req.body.password,
         passwordConfirm: req.body.passwordConfirm,
     });
@@ -68,6 +70,76 @@ exports.protect = catchAsync( async (req, res, next) => {
         return next(new AppError("Senha alterada recentemente. Por favor, faça login novamente.", 401));
     }
 
+    // Extremamente importante pra conseguir ver a role depois
     req.user = currentUser;
     next();
+});
+
+exports.restrictTo = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            return next(new AppError("Você não tem permissão para realizar esta ação.", 403));
+        }
+        next();
+    }
+}
+
+exports.forgotPassword = catchAsync( async (req, res, next) => {
+    // Procurar usuário com email fornecido
+    const user = await User
+        .findOne({email: req.body.email});
+    
+    if (!user) {
+        return next(new AppError("Não existe usuário com este email.", 404));
+    }
+
+    // Gerar token aleatório
+    const resetToken = user.createPasswordResetToken();
+    await user.save({validateBeforeSave: false});
+
+    const resetURL = `${req.protocol}://${req.get("host")}/api/v1/users/resetPassword/${resetToken}`;
+
+    const message = `Esqueceu sua senha? Envie PATCH request com sua nova senha e confirmação para: ${resetURL}.
+    \nSe você não esqueceu sua senha, por favor, ignore este email.`;	
+
+    try{
+        await sendEmail({
+            email: user.email,
+            subject: "Seu token de redefinição de senha (válido por 10 minutos)",
+            message,
+        });
+    } catch(err) {
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save({validateBeforeSave: false});
+        return next(new AppError("Houve um erro ao enviar o email. Tente novamente mais tarde!", 500));
+    }
+    res.status(200).json({
+        status: "success",
+        message: "Token enviado para email!",
+    });
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+    const hashedToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: {$gt: Date.now()},
+    });
+
+    if(!user) {
+        return next(new AppError("Token inválido ou expirado.", 400));
+    }
+
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    const token = signToken(user._id);
+    res.status(200).json({
+        status: "success",
+        token,
+    });
 });
