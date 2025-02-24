@@ -50,9 +50,14 @@ exports.login = catchAsync( async (req, res, next) => {
 });
 
 exports.protect = catchAsync( async (req, res, next) => {
-    if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-        token = req.headers.authorization.split(" ")[1];
+    let token;
+    if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith('Bearer')
+    ) {
+        token = req.headers.authorization.split(' ')[1];
     }
+
     if (!token) {
         return next(new AppError("Você não está logado! Por favor, faça login para obter acesso.", 401));
     }
