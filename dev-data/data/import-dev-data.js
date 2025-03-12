@@ -11,7 +11,7 @@ const DB = process.env.DATABASE.replace("<PASSWORD>", process.env.DATABASE_PASSW
 mongoose.connect(DB).then(() => console.log("Conexão com o banco de dados estabelecida..."));
 
 // Lendo arquivo JSON
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours-simple.json`, "utf-8"));
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`, "utf-8"));
 
 // Importando dados para o banco de dados
 const importData = async () => {
